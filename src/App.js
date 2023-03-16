@@ -1,23 +1,55 @@
-import logo from './logo.svg';
-import './App.css';
+import logo from "./logo.svg";
+import "./App.css";
+import yorkie from "yorkie-js-sdk";
+import { useEffect } from "react";
 
 function App() {
+  const client = new yorkie.Client("https://api.yorkie.dev", {
+    apiKey: "cg96lvi1i6k1erovlodg",
+  });
+
+  const doc = new yorkie.Document("concorrent-edit-text");
+
+  let editor = document.getElementById("editor");
+
+  const main = async () => {
+    await client.activate();
+
+    await client.attach(doc);
+
+    doc.update(root => {
+      // console.log(root.text);
+      if (root.text) {
+        editor.value = root.text;
+      } else {
+        root.text = "Edit";
+      }
+    });
+
+    doc.subscribe(event => {
+      if (event.type === "remote-change") {
+        editor.value = doc.getRoot().text;
+      }
+    });
+  };
+
+  const editorHandler = event => {
+    doc.update(root => {
+      root.text = event.target.value;
+    });
+  };
+
+  useEffect(() => {
+    editor = document.getElementById("editor");
+  }, []);
+
+  useEffect(() => {
+    editor && main();
+  }, [editor]);
+
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+      <input id="editor" onInput={editorHandler}></input>
     </div>
   );
 }
